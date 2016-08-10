@@ -70,7 +70,7 @@ use std::io;
 #[cfg(not(target_os = "macos"))]
 use std::cmp::Ordering;
 
-mod api;
+pub mod api;
 mod platform;
 mod events;
 mod headless;

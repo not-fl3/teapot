@@ -6,6 +6,10 @@ use glium::glutin;
 
 mod support;
 
+use std::cell::RefCell;
+use std::ptr::null_mut;
+use std::os::raw::{c_void};
+
 fn main() {
     use glium::DisplayBuild;
 
@@ -128,7 +132,7 @@ fn main() {
     let mut camera = support::camera::CameraState::new();
     let mut t : f32 = 0.0;
     // the main loop
-    support::start_loop(|| {
+    set_main_loop_callback(|| {
         camera.position.0 = t.sin() * 1.0;
         camera.update();
         t += 0.01;
@@ -155,14 +159,32 @@ fn main() {
                     &program, &uniforms, &params).unwrap();
         target.finish().unwrap();
         // polling and handling the events received by the window
-        for event in display.poll_events() {
-            match event {
-                glutin::Event::Closed => return support::Action::Stop,
-                ev => camera.process_input(&ev),
-            }
-        }
-
-        support::Action::Continue
+        // for event in display.poll_events() {
+        //     match event {
+        //         glutin::Event::Closed => return support::Action::Stop,
+        //         ev => camera.process_input(&ev),
+        //     }
+        // }
     });
     println!("ended");
+}
+
+thread_local!(static FINISH_CALLBACK: RefCell<*mut c_void> =
+              RefCell::new(null_mut()));
+pub fn set_main_loop_callback<F>(callback : F)
+    where F : FnMut() {
+    FINISH_CALLBACK.with(|log| {
+        *log.borrow_mut() = &callback as *const _ as *mut c_void;
+    });
+
+    unsafe { ::glium::glutin::api::emscripten::ffi::emscripten_set_main_loop(wrapper::<F>, 20, 1); }
+
+    unsafe extern "C" fn wrapper<F>()
+        where F : FnMut() {
+
+    FINISH_CALLBACK.with(|z| {
+        let closure = *z.borrow_mut() as *mut F;
+        (*closure)();
+    });
+}
 }

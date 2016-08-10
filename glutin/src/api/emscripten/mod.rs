@@ -16,7 +16,7 @@ use WindowAttributes;
 
 use std::collections::VecDeque;
 
-mod ffi;
+pub mod ffi;
 
 pub struct Window {
     context: ffi::EMSCRIPTEN_WEBGL_CONTEXT_HANDLE,
@@ -256,7 +256,7 @@ impl GlContext for Window {
 
     #[inline]
     fn swap_buffers(&self) -> Result<(), ContextError> {
-        unsafe { ffi::emscripten_sleep(1); }  // FIXME:  
+        //unsafe { ffi::emscripten_sleep(1); }  // FIXME:  
         Ok(())
     }
 
