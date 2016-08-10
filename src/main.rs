@@ -169,11 +169,11 @@ fn main() {
     println!("ended");
 }
 
-thread_local!(static FINISH_CALLBACK: RefCell<*mut c_void> =
+thread_local!(static MAIN_LOOP_CALLBACK: RefCell<*mut c_void> =
               RefCell::new(null_mut()));
 pub fn set_main_loop_callback<F>(callback : F)
     where F : FnMut() {
-    FINISH_CALLBACK.with(|log| {
+    MAIN_LOOP_CALLBACK.with(|log| {
         *log.borrow_mut() = &callback as *const _ as *mut c_void;
     });
 
@@ -182,7 +182,7 @@ pub fn set_main_loop_callback<F>(callback : F)
     unsafe extern "C" fn wrapper<F>()
         where F : FnMut() {
 
-    FINISH_CALLBACK.with(|z| {
+    MAIN_LOOP_CALLBACK.with(|z| {
         let closure = *z.borrow_mut() as *mut F;
         (*closure)();
     });
